@@ -1,0 +1,96 @@
+
+
+<style>
+
+.pagination {}
+.pagination select {width: 60px; display: inline;background: #fff; border: 1px solid #aaa;}
+.pagination form {display: inline;} 
+.pagination input {width: 40px; border: 1px solid #aaa;}
+</style>
+
+<script>
+$(document).ready(function() {
+	var pagination_wrapper = $('.pagination_wrapper{{_tag}}');
+	var paginurl = pagination_wrapper.attr('paginurl');
+	var thepage = pagination_wrapper.attr('thepage');
+	var npp = pagination_wrapper.attr('npp');
+	var totalpages = pagination_wrapper.attr('totalpages');
+	
+	var pagination_htmlcontent = $('.pagination_htmlcontent', pagination_wrapper);
+	//console.log(pagination_wrapper, pagination_htmlcontent)
+	
+	
+	var helper = function (query) {
+		$.get(paginurl, query, function (data) {
+			if (data.success) {
+				pagination_htmlcontent.html(data.htmlcontent);
+				pselector.val(data.thepage);
+				pagination_wrapper.attr('thepage', data.thepage);
+			}
+		});
+	}
+	
+	var pselector = $('select', pagination_wrapper);
+	pselector.change(function () {
+		var queryjson = {thepage: $(this).val(), npp: npp,	totalpages: totalpages};
+		helper(queryjson);
+		return false;
+	});
+	
+	$('.pagination a', pagination_wrapper).click(function () {
+		var queryjson = {};
+		if ($(this).hasClass('pagination_head')) {
+			queryjson = {thepage: 1, npp: npp,	totalpages: totalpages};
+		}
+		else if ($(this).hasClass('pagination_tail')) {
+			queryjson = {thepage: totalpages, npp: npp,	totalpages: totalpages};
+		}
+		else if ($(this).hasClass('pagination_prev')) {
+			var thepage = parseInt(pagination_wrapper.attr('thepage')) - 1;
+			if (thepage < 1) thepage = 1;
+			queryjson = {thepage: thepage, npp: npp, totalpages: totalpages};
+		}
+		else if ($(this).hasClass('pagination_next')) {
+			var thepage = parseInt(pagination_wrapper.attr('thepage')) + 1;
+			if (thepage > totalpages) thepage = totalpages;
+			queryjson = {thepage: thepage, npp: npp, totalpages: totalpages};
+		}
+
+		helper(queryjson);
+		return false;
+	});
+
+	var pagination_form = $('form', pagination_wrapper);
+	pagination_form.submit(function () {
+		var query = $(this).serialize();
+		helper(query);
+		return false;
+	})		
+
+});
+</script>
+
+<div class="pagination_wrapper{{_tag}}" paginurl="{{paginurl}}?_tag={{_tag}}" thepage="{{thepage}}" npp="{{npp}}" totalpages="{{totalpages}}">
+	<div class="pagination_htmlcontent"> {{htmlcontent}} </div>
+
+	<div class="pagination" >
+		<a class="pagination_head pagination_item" href="javascript:;">首页</a>
+		<a class="pagination_prev pagination_item" href="javascript:;">上一页</a>
+		<select class="pagination_select">
+			{% for i=1, totalpages do %}
+			<option value="{{i}}" {% if i == thepage then %} selected="true" {% end %}>{{i}}/{{totalpages}}</option>
+			{% end %}
+		</select>
+		<form method="post" class="pagination_form">
+			<input type="text" name="thepage" maxlength="4" size='4' />
+			<input type="hidden" name="npp" value="{{npp}}" />
+			<input type="hidden" name="totalpages" value="{{totalpages}}" />
+		</form>
+
+		<a class="pagination_next pagination_item" href="javascript:;">下一页</a>
+		<a class="pagination_tail pagination_item" href="javascript:;">末页</a>
+		<span>共 {{totalnum}} 条.</span>
+	</div>
+
+</div>
+

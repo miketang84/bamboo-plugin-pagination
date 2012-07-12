@@ -1,4 +1,1 @@
-bamboo-plugin-pagination
-========================
-
-pagination plugin for bamboo framework.
+This is the pagination plugin for bamboo.

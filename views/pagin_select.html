@@ -1,0 +1,49 @@
+
+
+<style>
+
+.pagination {}
+.pagination select {width: 60px; display: inline;background: #fff; border: 1px solid #aaa;}
+.pagination form {display: inline;} 
+.pagination input {width: 40px; border: 1px solid #aaa;}
+</style>
+
+<script>
+$(document).ready(function() {
+	var pagination_wrapper = $('.pagination_wrapper');
+	var pselector = $('select', pagination_wrapper);
+	pselector.change(function () {
+		var thepage = $(this).val();
+		//console.log(thepage);
+		
+		var paginurl = $(this).attr('paginurl') + '&thepage=' + thepage.toString();
+		//console.log(paginurl);
+		window.location.href = paginurl;
+		return false;
+	});
+});
+</script>
+
+<div class="pagination_wrapper">
+	{{htmlcontent}}
+
+	<div class="pagination" >
+		<a class="pagination_head pagination_item" href="{{paginurl}}?_tag={{_tag}}&thepage=1&npp={{npp}}&totalpages={{totalpages}}">首页</a>
+		<a class="pagination_prev pagination_item" href="{{paginurl}}?_tag={{_tag}}&thepage={{prevpage}}&npp={{npp}}&totalpages={{totalpages}}">上一页</a>
+		<select class="pagination_select" paginurl="{{paginurl}}?_tag={{_tag}}&npp={{npp}}&totalpages={{totalpages}}">
+			{% for i=1, totalpages do %}
+			<option value="{{i}}" {% if i == thepage then %} selected="true" {% end %}>{{i}}/{{totalpages}}</option>
+			{% end %}
+		</select>
+		<form method="post" class="pagination_form" action="{{paginurl}}?_tag={{_tag}}">
+			<input type="text" name="thepage" maxlength="4" size='4' />
+			<input type="hidden" name="npp" value="{{npp}}" />
+			<input type="hidden" name="totalpages" value="{{totalpages}}" />
+		</form>
+
+		<a class="pagination_next pagination_item" href="{{paginurl}}?_tag={{_tag}}&thepage={{nextpage}}&npp={{npp}}&totalpages={{totalpages}}">下一页</a>
+		<a class="pagination_tail pagination_item" href="{{paginurl}}?_tag={{_tag}}&thepage={{totalpages}}&npp={{npp}}&totalpages={{totalpages}}">末页</a>
+	</div>
+
+</div>
+
