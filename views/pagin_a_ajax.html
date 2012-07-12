@@ -14,7 +14,7 @@
 <script>
   $(document).ready(function() {
 
-	var paginator_wrapper = $('.paginator_wrapper');
+	var paginator_wrapper = $('.paginator_wrapper_{{_tag}}');
 	var paginurl = paginator_wrapper.attr('paginurl');
 	var thepage = paginator_wrapper.attr('thepage');
 	var npp = paginator_wrapper.attr('npp');
@@ -34,7 +34,7 @@
   });
 </script>
 
-<div class="paginator_wrapper" paginurl="{{paginurl}}?_tag={{_tag}}" thepage="{{thepage}}" npp="{{npp}}" totalpages="{{totalpages}}">
+<div class="paginator_wrapper_{{_tag}}" paginurl="{{paginurl}}?_tag={{_tag}}" thepage="{{thepage}}" npp="{{npp}}" totalpages="{{totalpages}}">
 	<div class="paginator_htmlcontent"> {{htmlcontent}} </div>
 	{% if totalnum and totalnum > 0 then %}
 		<div class="pagination">

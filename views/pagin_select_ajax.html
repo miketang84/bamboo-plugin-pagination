@@ -10,7 +10,7 @@
 
 <script>
 $(document).ready(function() {
-	var pagination_wrapper = $('.pagination_wrapper{{_tag}}');
+	var pagination_wrapper = $('.pagination_wrapper_{{_tag}}');
 	var paginurl = pagination_wrapper.attr('paginurl');
 	var thepage = pagination_wrapper.attr('thepage');
 	var npp = pagination_wrapper.attr('npp');
@@ -70,7 +70,7 @@ $(document).ready(function() {
 });
 </script>
 
-<div class="pagination_wrapper{{_tag}}" paginurl="{{paginurl}}?_tag={{_tag}}" thepage="{{thepage}}" npp="{{npp}}" totalpages="{{totalpages}}">
+<div class="pagination_wrapper_{{_tag}}" paginurl="{{paginurl}}?_tag={{_tag}}" thepage="{{thepage}}" npp="{{npp}}" totalpages="{{totalpages}}">
 	<div class="pagination_htmlcontent"> {{htmlcontent}} </div>
 
 	<div class="pagination" >

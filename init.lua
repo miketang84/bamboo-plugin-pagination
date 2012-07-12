@@ -27,7 +27,7 @@ function helper(_args)
 	local totalnum, htmlcontent
 	local datasource
 	if not _args.callback then
-		assert(_args.content_tmpl)
+		-- assert(_args.content_tmpl)
 		-- if supply datasource
 		if _args.orig_datasource then
 			datasource = List(_args.orig_datasource) or List()
@@ -140,22 +140,24 @@ function main(args, env)
 	assert(args._tag, '[Error] @plugin pagination - missing _tag.')
 	--assert(args.paginurl, '[Error] @plugin pagination - missing paginurl.')
 
-	local purl = '/pagination/'..args._tag..'/page'
-	local jurl = '/pagination/'..args._tag..'/json'
+	local purl = '/pagination/'..args._tag..'/page/'
+	local jurl = '/pagination/'..args._tag..'/json/'
 	local urls = {
 		[purl] = page,
 		[jurl] = json,
 	}
 	table.update(bamboo.URLS, urls)
-	args.paginurl = args.pagintype == 'json' and jurl or purl
 	
 	if args.datasource then
 		args.orig_datasource = args.datasource
 	end
-	plugin.persist(plugin_name, args)
 	
 	-- default choose pagin_a style
 	args.tmpl = args.tmpl or 'pagin_select_ajax'
+	args.paginurl = args.tmpl:endsWith('_ajax') and jurl or purl
+
+	plugin.persist(plugin_name, args)
+
 	return View(TMPLS[args.tmpl]) (helper(args))
 end
 
