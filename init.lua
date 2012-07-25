@@ -5,7 +5,7 @@ local plugin = require 'bamboo.plugin'
 local plugin_name = 'pagination'
 local path='../plugins/pagination/views/'
 local TMPLS = {
-	['pagin_a_ajax'] = path .. 'pagin_a_ajax.html',
+	['pagin_a_ajaxpage'] = path .. 'pagin_a_ajaxpage.html',
 	['pagin_select_ajax'] = path .. 'pagin_select_ajax.html',	
 	['pagin_a'] = path .. 'pagin_a.html',
 	['pagin_select'] = path .. 'pagin_select.html',		
@@ -39,6 +39,7 @@ function helper(_args)
 
 			datasource = datasource:slice(starti, endi)
 			_args.datasource = datasource
+			_args.thepage = thepage
 			local content_tmpl = _args.content_tmpl 
 			if _args.inline_tmpl then 
 				htmlcontent = View(_args.inline_tmpl, 'inline')(_args)
@@ -72,6 +73,7 @@ function helper(_args)
 			end
 			
 			_args.datasource = datasource
+			_args.thepage = thepage
 			if _args.inline_tmpl then 
 				htmlcontent = View(_args.inline_tmpl, 'inline')(_args)
 			else

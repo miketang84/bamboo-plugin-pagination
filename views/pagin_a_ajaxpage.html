@@ -24,6 +24,11 @@
 	
 	
 	var helper = function (query) {
+		$.post('{{paginurl}}?_tag={{_tag}}', query, function (data) {
+			if (data.success) {
+				paginator_wrapper.parent().html(data.htmlcontent);
+			}
+		}, 'json');
 	  paginator_wrapper.parent().load('{{paginurl}}?_tag={{_tag}}', query);
 	}
 
