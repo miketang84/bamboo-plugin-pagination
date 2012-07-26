@@ -134,7 +134,7 @@ datasource=all_persons,
 inline_tmpl = inline_variable,
 content_tmpl="item.html", 
 npp=20,
-pagintype = 'json',
+paginurl = 'xxxxx',
 ^}
 
 --]]
@@ -142,21 +142,22 @@ function main(args, env)
 	assert(args._tag, '[Error] @plugin pagination - missing _tag.')
 	--assert(args.paginurl, '[Error] @plugin pagination - missing paginurl.')
 
-	local purl = '/pagination/'..args._tag..'/page/'
-	local jurl = '/pagination/'..args._tag..'/json/'
-	local urls = {
-		[purl] = page,
-		[jurl] = json,
-	}
-	table.update(bamboo.URLS, urls)
+	-- default choose pagin_a style
+	args.tmpl = args.tmpl or 'pagin_select_ajax'
+	if not args.paginurl then
+		local purl = '/pagination/'..args._tag..'/page/'
+		local jurl = '/pagination/'..args._tag..'/json/'
+		local urls = {
+			[purl] = page,
+			[jurl] = json,
+		}
+		table.update(bamboo.URLS, urls)
+		args.paginurl = args.tmpl:endsWith('_ajax') and jurl or purl
+	end
 	
 	if args.datasource then
 		args.orig_datasource = args.datasource
 	end
-	
-	-- default choose pagin_a style
-	args.tmpl = args.tmpl or 'pagin_select_ajax'
-	args.paginurl = args.tmpl:endsWith('_ajax') and jurl or purl
 
 	plugin.persist(plugin_name, args)
 
