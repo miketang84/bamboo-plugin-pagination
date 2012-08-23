@@ -9,22 +9,41 @@ local TMPLS = {
 	['pagin_select_ajax'] = path .. 'pagin_select_ajax.html',	
 	['pagin_a'] = path .. 'pagin_a.html',
 	['pagin_select'] = path .. 'pagin_select.html',		
+	['pagin_a_ajax_new'] = path .. 'pagin_a_ajax_new.html',		
+	['pagin_power'] = path .. 'pagin_power.html',			
 }
+
+local makeGeneratorParams = function (generator, starti, endi, is_rev)
+	table.remove(generator, 2)
+	table.remove(generator, 1)
+	if is_rev == 'rev' then
+		table.insert(generator, -endi)
+		table.insert(generator, -starti)
+		table.insert(generator, 'rev')					
+	
+	else
+		table.insert(generator, starti)
+		table.insert(generator, endi)
+	end
+	
+	return generator
+end
 
 function helper(_args)
 	local params = req.PARAMS
 	
-	local thepage = tonumber(params.thepage) or 1
+	local thepage = tonumber(params.thepage) or tonumber(_args.thepage) or 1
 	if thepage < 1 then thepage = 1 end
-	local totalpages = tonumber(params.totalpages) or 1
-	if totalpages and thepage > totalpages then thepage = totalpages end
+--	local totalpages = tonumber(params.totalpages) or 1
+--	if totalpages and thepage > totalpages then thepage = totalpages end
+	
 	local npp = tonumber(params.npp) or tonumber(_args.npp) or 5
 	local starti = (thepage-1) * npp + 1
 	local endi = thepage * npp
 	local paginurl = params.paginurl or _args.paginurl
 	local callback = _args.callback
 	
-	local totalnum, htmlcontent
+	local totalnum, htmlcontent, headcontent, tailcontent
 	local datasource
 	if not _args.callback then
 		-- assert(_args.content_tmpl)
@@ -32,14 +51,10 @@ function helper(_args)
 		if _args.orig_datasource then
 			datasource = List(_args.orig_datasource) or List()
 			totalnum = #datasource
-			if totalnum then
-				totalpages = math.ceil(totalnum/npp)
-				if thepage > totalpages	then thepage = totalpages end
-			end
 
 			datasource = datasource:slice(starti, endi)
 			_args.datasource = datasource
-			_args.thepage = thepage
+			
 			local content_tmpl = _args.content_tmpl 
 			if _args.inline_tmpl then 
 				htmlcontent = View(_args.inline_tmpl, 'inline')(_args)
@@ -49,38 +64,71 @@ function helper(_args)
 --			print(totalnum, htmlcontent)
 		else
 			-- if supply model name, query_args, is_rev
-			assert(type(_args.model) == 'string')
-			
-			local model = bamboo.getModelByName(_args.model)
-			assert(model)
-			-- if query_args is 'all'
-			if not _args.query_args or _args.query_args == 'all' then
+			local generator = table.copy(_args.generator)
+			assert(type(generator) == 'table')
+			local method = generator[2]
+			assert(type(method) == 'string')
+			if method == 'filter' then
+				local model = bamboo.getModelByName(generator[1])			
+				assert(isClass(model))				
+				generator = makeGeneratorParams(generator, starti, endi, _args.is_rev)
+				datasource = model:filter(unpack(generator))
+				totalnum = model:count(unpack(generator))
+				print('---', totalnum, #datasource)
+				
+			elseif method == 'getForeign' then
+				local v = generator[1]
+				assert(isInstance(v))
+				generator = makeGeneratorParams(generator, starti, endi, _args.is_rev)
+				datasource = v:getForeign(unpack(generator))				
+				totalnum = v:numForeign(unpack(generator))
+				
+			elseif method == 'slice' then
+				local model = bamboo.getModelByName(generator[1])			
+				assert(isClass(model))
+				generator = makeGeneratorParams(generator, starti, endi, _args.is_rev)
+				datasource = model:slice(unpack(generator))
 				totalnum = model:numbers()
-				if _args.is_rev == 'rev' then
-					datasource = model:slice(-endi, -starti, 'rev')
-				else
-					datasource = model:slice(starti, endi)					
-				end
-			else
-				-- if query_args is table or function
-				assert(type(_args.query_args) == 'table' or type(_args.query_args) == 'function') 
-				if _args.is_rev == 'rev' then
-					datasource = model:filter(_args.query_args, -endi, -starti, 'rev')
-				else
-					datasource = model:filter(_args.query_args, starti, endi)					
-				end
-				totalnum = model:count(_args.query_args)
-			end
+				
+			elseif method == 'getCustomQuerySet' then
+				local model = bamboo.getModelByName(generator[1])			
+				assert(isClass(model))
+				generator = makeGeneratorParams(generator, starti, endi, _args.is_rev)
+				datasource = model:getCustomQuerySet(unpack(generator))
+				totalnum = model:numCustom(unpack(generator))
 			
+			end
+
 			_args.datasource = datasource
-			_args.thepage = thepage
+			_args.totalnum = totalnum
 			if _args.inline_tmpl then 
 				htmlcontent = View(_args.inline_tmpl, 'inline')(_args)
 			else
 				htmlcontent = View(_args.content_tmpl)(_args)
 			end
 			
+			if _args.head_inline then 
+				headcontent = View(_args.head_inline, 'inline')(_args)
+			else
+				headcontent = View(_args.head_tmpl)(_args)
+			end
+			
+			if _args.inline_tmpl then 
+				tailcontent = View(_args.tail_inline, 'inline')(_args)
+			else
+				tailcontent = View(_args.tail_tmpl)(_args)
+			end
+			
+			
 		end
+		
+		if totalnum then
+			totalpages = math.ceil(totalnum/npp)
+			if thepage > totalpages	then thepage = totalpages end
+		end
+		_args.thepage = thepage
+		_args.totalpages = totalpages
+
 	else
 		-- if supply callback
 		if type(callback) == 'string' then
@@ -106,7 +154,11 @@ function helper(_args)
 		['paginurl'] = paginurl, 
 		['thepage'] = thepage, 
 		['prevpage'] = prevpage, 
-		['nextpage'] = nextpage
+		['nextpage'] = nextpage,
+		
+		['headcontent'] = headcontent,
+		['tailcontent'] = tailcontent,
+		['js_callback'] = _args.js_callback
 	}
 end
 
@@ -127,7 +179,7 @@ function json(web, req)
 end
 
 
---[[
+--[==[
 
 {^ pagination 
 datasource=all_persons,
@@ -135,9 +187,26 @@ inline_tmpl = inline_variable,
 content_tmpl="item.html", 
 npp=20,
 paginurl = 'xxxxx',
+pagin_datatype = 'json',
+thepage = n,
+
+head_tmpl = 'head.html',
+head_inline = xxx,
+tail_tmpl = 'tail.html',
+tail_inline = xxx,
+
+generator = {'Model', 'filter', query_args, ...}
+generator = {v, 'getForeign', field, start, stop, is_rev}
+generator = {'Model', 'slice', start, stop, is_rev}
+generator = {'Model', 'getCustomQuerySet', key, start, stop, is_rev}
+
+jscallback = [[
+	js code here
+]]
+
 ^}
 
---]]
+--]==]
 function main(args, env)
 	assert(args._tag, '[Error] @plugin pagination - missing _tag.')
 	--assert(args.paginurl, '[Error] @plugin pagination - missing paginurl.')
@@ -152,7 +221,7 @@ function main(args, env)
 			[jurl] = json,
 		}
 		table.update(bamboo.URLS, urls)
-		args.paginurl = args.tmpl:endsWith('_ajax') and jurl or purl
+		args.paginurl = args.pagin_datatype == 'json' and jurl or purl
 	end
 	
 	if args.datasource then

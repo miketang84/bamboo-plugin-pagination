@@ -26,6 +26,8 @@ $(document).ready(function() {
 				pagination_htmlcontent.html(data.htmlcontent);
 				pselector.val(data.thepage);
 				pagination_wrapper.attr('thepage', data.thepage);
+				
+				{{js_callback}}
 			}
 		});
 	}
@@ -71,9 +73,14 @@ $(document).ready(function() {
 </script>
 <div class="pagination_wrapper_{{_tag}}" paginurl="{{paginurl}}?_tag={{_tag}}" thepage="{{thepage}}" npp="{{npp}}" totalpages="{{totalpages}}">
 	
-	
+	{% if headcontent then %}
+	<div class="pagination_headcontent"> {{headcontent}} </div>
+	{% end %}
 	<div class="pagination_htmlcontent"> {{htmlcontent}} </div>
-
+	{% if tailcontent then %}
+	<div class="pagination_tailcontent"> {{tailcontent}} </div>
+	{% end %}
+	
 	<div class="pagination" >
 		<a class="pagination_head pagination_item" href="javascript:;">首页</a>
 		<a class="pagination_prev pagination_item" href="javascript:;">上一页</a>
