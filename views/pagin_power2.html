@@ -24,7 +24,9 @@
 	
 	
 	var helper = function (query) {
-	  paginator_wrapper.parent().load('{{paginurl}}?_tag={{_tag}}', query);
+	  paginator_wrapper.parent().load('{{paginurl}}?_tag={{_tag}}', query, function () {
+	  	{{ js_callback }}
+	  });
 	}
 
 	$('.pagination a', paginator_wrapper).click(function(){
