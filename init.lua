@@ -56,13 +56,6 @@ function helper(_args)
 			datasource = datasource:slice(starti, endi)
 			_args.datasource = datasource
 			
-			local content_tmpl = _args.content_tmpl 
-			if _args.inline_tmpl then 
-				htmlcontent = View(_args.inline_tmpl, 'inline')(_args)
-			else
-				htmlcontent = View(_args.content_tmpl)(_args)
-			end
---			print(totalnum, htmlcontent)
 		else
 			-- if supply model name, query_args, is_rev
 			local generator = table.copy(_args.generator)
@@ -102,26 +95,6 @@ function helper(_args)
 
 			_args.datasource = datasource
 			_args.totalnum = totalnum
-			if _args.inline_tmpl then 
-				htmlcontent = View(_args.inline_tmpl, 'inline')(_args)
-			else
-				htmlcontent = View(_args.content_tmpl)(_args)
-			end
-			
-			if thepage == 1 then
-				if _args.head_inline then 
-					headcontent = View(_args.head_inline, 'inline')(_args)
-				else
-					headcontent = View(_args.head_tmpl)(_args)
-				end
-				
-				
-				if _args.inline_tmpl then 
-					tailcontent = View(_args.tail_inline, 'inline')(_args)
-				else
-					tailcontent = View(_args.tail_tmpl)(_args)
-				end
-			end
 		end
 		
 		if totalnum then
@@ -130,6 +103,22 @@ function helper(_args)
 		end
 		_args.thepage = thepage
 		_args.totalpages = totalpages
+			
+            	if _args.inline_tmpl then 
+			htmlcontent = View(_args.inline_tmpl, 'inline')(_args)
+		else
+			htmlcontent = View(_args.content_tmpl)(_args)
+		end
+			
+		if thepage == 1 then
+			if _args.head_inline then 
+				headcontent = View(_args.head_inline, 'inline')(_args)
+			end
+				
+			if _args.tail_inline then 
+				tailcontent = View(_args.tail_inline, 'inline')(_args)
+			end
+		end
 
 	else
 		-- if supply callback
@@ -147,7 +136,7 @@ function helper(_args)
 	local nextpage = thepage + 1
 	if nextpage > totalpages then nextpage = totalpages end
 	
-	return {
+    	return {
 		['_tag'] = _args._tag,
 		['totalnum'] = totalnum,
 		['htmlcontent'] = htmlcontent, 
