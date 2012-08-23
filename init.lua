@@ -10,7 +10,8 @@ local TMPLS = {
 	['pagin_a'] = path .. 'pagin_a.html',
 	['pagin_select'] = path .. 'pagin_select.html',		
 	['pagin_a_ajax_new'] = path .. 'pagin_a_ajax_new.html',		
-	['pagin_power'] = path .. 'pagin_power.html',			
+	['pagin_power'] = path .. 'pagin_power.html',
+	['pagin_power2'] = path .. 'pagin_power2.html',
 }
 
 local makeGeneratorParams = function (generator, starti, endi, is_rev)
@@ -107,19 +108,20 @@ function helper(_args)
 				htmlcontent = View(_args.content_tmpl)(_args)
 			end
 			
-			if _args.head_inline then 
-				headcontent = View(_args.head_inline, 'inline')(_args)
-			else
-				headcontent = View(_args.head_tmpl)(_args)
+			if thepage == 1 then
+				if _args.head_inline then 
+					headcontent = View(_args.head_inline, 'inline')(_args)
+				else
+					headcontent = View(_args.head_tmpl)(_args)
+				end
+				
+				
+				if _args.inline_tmpl then 
+					tailcontent = View(_args.tail_inline, 'inline')(_args)
+				else
+					tailcontent = View(_args.tail_tmpl)(_args)
+				end
 			end
-			
-			if _args.inline_tmpl then 
-				tailcontent = View(_args.tail_inline, 'inline')(_args)
-			else
-				tailcontent = View(_args.tail_tmpl)(_args)
-			end
-			
-			
 		end
 		
 		if totalnum then
