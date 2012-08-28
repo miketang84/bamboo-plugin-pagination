@@ -1,0 +1,119 @@
+<style>
+/* .pagination{height:36px;margin:18px 0;} */
+.pagination ul{display:inline-block;*display:inline;*zoom:1;margin-left:0;margin-bottom:0;-webkit-border-radius:3px;-moz-border-radius:3px;border-radius:3px;-webkit-box-shadow:0 1px 2px rgba(0, 0, 0, 0.05);-moz-box-shadow:0 1px 2px rgba(0, 0, 0, 0.05);box-shadow:0 1px 2px rgba(0, 0, 0, 0.05);}
+.pagination li{display:inline;}
+.pagination a{float:left;padding:0 10px;line-height:24px;text-decoration:none;border:1px solid #ddd;border-left-width:0;}
+.pagination a:hover,.pagination .active a{background-color:#f5f5f5;}
+.pagination .active a{color:#999999;cursor:default;}
+.pagination .disabled a,.pagination .disabled a:hover{color:#999999;background-color:transparent;cursor:default;}
+.pagination li:first-child a{border-left-width:1px;-webkit-border-radius:3px 0 0 3px;-moz-border-radius:3px 0 0 3px;border-radius:3px 0 0 3px;}
+.pagination li:last-child a{border-radius:0 3px 3px 0;-webkit-border-radius:0 3px 3px 0;-moz-border-radius:0 3px 3px 0;}
+.pagination-centered{text-align:center;}
+.pagination-right{text-align:right;}
+</style>
+
+<div class="paginator_wrapper_{{_tag}}" paginurl="{{paginurl}}?_tag={{_tag}}" thepage="{{thepage}}" npp="{{npp}}" totalpages="{{totalpages}}">
+{-	<!-- top pagination -->
+	{% if totalnum and totalnum > 0 then %}
+		<div class="pagination">
+		  <ul>
+			<!-- <li{% if thepage == 1 then %} class="disabled" {% end %}><a href="javascript:;" ref="thepage={{prevpage}}&npp={{npp}}&totalpages={{totalpages}}">«</a></li> -->
+			<li{% if thepage == 1 then %} class="disabled" {% end %}><a href="###" ref="thepage={{prevpage}}&npp={{npp}}&totalpages={{totalpages}}">上一页</a></li>
+			{% pageShown = 10 %}
+			{% offset = 5 %}
+			{% if thepage>offset then %}
+			<li>
+			  <a href="###" ref="thepage={{1}}&npp={{npp}}&totalpages={{totalpages}}">1...</a>
+			</li>
+			{% end %}
+			{% for i=thepage-offset+1, thepage-offset+pageShown do %}
+			{% if i >= 1 and i <= totalpages then %}
+			<li{% if i == thepage then %} class="active" {% end %}>
+			  <a href="###" ref="thepage={{i}}&npp={{npp}}&totalpages={{totalpages}}">{{i}}</a>
+			</li>
+			{% end %}
+			{% end %}
+			{% if thepage<totalpages-offset then %}
+			<li>
+			  <a href="###" ref="thepage={{totalpages}}&npp={{npp}}&totalpages={{totalpages}}">...{{totalpages}}</a>
+			</li>
+			{% end %}
+			<!-- <li{% if thepage == totalpages then %} class="disabled" {% end %}><a href="javascript:;" ref="thepage={{nextpage}}&npp={{npp}}&totalpages={{totalpages}}">»</a></li> -->
+			<li{% if thepage == totalpages then %} class="disabled" {% end %}><a href="###" ref="thepage={{nextpage}}&npp={{npp}}&totalpages={{totalpages}}">下一页</a></li>
+		  </ul>
+
+		  <select style="display:none" class="pagination_select" paginurl="{{paginurl}}?_tag={{_tag}}&npp={{npp}}&totalpages={{totalpages}}">
+			{% for i=1, totalpages do %}
+			<option value="{{i}}" {% if i == thepage then %} selected="true" {% end %}>{{i}}/{{totalpages}}</option>
+			{% end %}
+		  </select>
+
+		<span style="display:none;">共 {{totalnum}} 条.</span>
+
+		</div>
+	{% end %}	
+	
+	{% if headcontent then %}
+	<div class="paginator_headcontent"> {{headcontent}} </div>
+	{% end %}
+-}
+
+	<div class="paginator_htmlcontent"> {{htmlcontent}} </div>
+	
+{-
+	{% if tailcontent then %}
+	<div class="paginator_tailcontent"> {{tailcontent}} </div>
+	{% end %}
+-}	
+
+	{%
+		local function appendPage (n)
+			local location = req.headers.URI
+			ptable(req.headers)
+			if location:find('?') then
+				return location:gsub('_thepage=%d+', '_thepage=' .. n)
+			else
+				return location .. "?_thepage=" .. n
+			end
+		end
+		
+	%}
+
+	<!-- below pagination -->
+	{% if totalnum and totalnum > 0 then %}
+		<div class="pagination">
+		  <ul>
+			<!-- <li{% if thepage == 1 then %} class="disabled" {% end %}><a href="javascript:;" ref="thepage={{prevpage}}&npp={{npp}}&totalpages={{totalpages}}">«</a></li> -->
+			<li{% if thepage == 1 then %} class="disabled" {% end %}>
+				<a href="{{appendPage(prevpage)}}">上一页</a>
+			</li>
+			{% pageShown = 10 %}
+			{% offset = 5 %}
+			{% if thepage>offset then %}
+			<li>
+			  <a href="{{appendPage(1)}}">1...</a>
+			</li>
+			{% end %}
+			{% for i=thepage-offset+1, thepage-offset+pageShown do %}
+			{% if i >= 1 and i <= totalpages then %}
+			<li{% if i == thepage then %} class="active" {% end %}>
+			  <a href="{{appendPage(i)}}">{{i}}</a>
+			</li>
+			{% end %}
+			{% end %}
+			{% if thepage<totalpages-offset then %}
+			<li>
+			  <a href="{{appendPage(totalpages)}}">...{{totalpages}}</a>
+			</li>
+			{% end %}
+			<!-- <li{% if thepage == totalpages then %} class="disabled" {% end %}><a href="javascript:;" ref="thepage={{nextpage}}&npp={{npp}}&totalpages={{totalpages}}">»</a></li> -->
+			<li{% if thepage == totalpages then %} class="disabled" {% end %}>
+				<a href="{{appendPage(nextpage)}}">下一页</a>
+			</li>
+		  </ul>
+
+		<span style="display:none;">共 {{totalnum}} 条.</span>
+
+		</div>
+	{% end %}	
+</div>

@@ -12,6 +12,7 @@ local TMPLS = {
 	['pagin_a_ajax_new'] = path .. 'pagin_a_ajax_new.html',		
 	['pagin_power'] = path .. 'pagin_power.html',
 	['pagin_power2'] = path .. 'pagin_power2.html',
+	['pagin_trad'] = path .. 'pagin_trad.html',
 }
 
 local makeGeneratorParams = function (generator, starti, endi, is_rev)
