@@ -69,14 +69,23 @@ function helper(_args)
 				generator = makeGeneratorParams(generator, starti, endi, _args.is_rev)
 				datasource = model:filter(unpack(generator))
 				totalnum = model:count(unpack(generator))
-				print('---', totalnum, #datasource)
 				
 			elseif method == 'getForeign' then
 				local v = generator[1]
 				assert(isInstance(v))
 				generator = makeGeneratorParams(generator, starti, endi, _args.is_rev)
-				datasource = v:getForeign(unpack(generator))				
-				totalnum = v:numForeign(unpack(generator))
+				-- no appending filter part
+				if type(generator[2]) == 'number' then
+					datasource = v:getForeign(unpack(generator))				
+					totalnum = v:numForeign(unpack(generator))
+				elseif generator[2] == 'filter' then
+					-- now generator[1] is 'field', generator[2] is 'filter'
+					local query_set = v:getForeign(generator[1])
+					table.remove(generator, 2)
+					table.remove(generator, 1)					
+					-- need to let filter to return the total number of fit elements
+					datasource, totalnum = query_set:filter(unpack(generator))
+				end
 				
 			elseif method == 'slice' then
 				local model = bamboo.getModelByName(generator[1])			
@@ -189,6 +198,7 @@ tail_inline = xxx,
 
 generator = {'Model', 'filter', query_args, ...}
 generator = {v, 'getForeign', field, start, stop, is_rev}
+generator = {v, 'getForeign', field, 'filter', query_args, ..., start, stop, is_rev}
 generator = {'Model', 'slice', start, stop, is_rev}
 generator = {'Model', 'getCustomQuerySet', key, start, stop, is_rev}
 
