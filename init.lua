@@ -31,7 +31,7 @@ local makeGeneratorParams = function (generator, starti, endi, is_rev)
 	return generator
 end
 
-function helper(_args)
+function helper(_args, req)
 	local params = req.PARAMS
 	
 	local thepage = tonumber(params.thepage) or tonumber(_args.thepage) or 1
@@ -47,100 +47,85 @@ function helper(_args)
 	
 	local totalnum, htmlcontent, headcontent, tailcontent
 	local datasource
-	if not _args.callback then
-		-- assert(_args.content_tmpl)
-		-- if supply datasource
-		if _args.orig_datasource then
-			datasource = List(_args.orig_datasource) or List()
-			totalnum = #datasource
 
-			datasource = datasource:slice(starti, endi)
-			_args.datasource = datasource
-			
-		else
-			-- if supply model name, query_args, is_rev
-			local generator = table.copy(_args.generator)
-			assert(type(generator) == 'table')
-			local method = generator[2]
-			assert(type(method) == 'string')
-			if method == 'filter' then
-				local model = bamboo.getModelByName(generator[1])			
-				assert(isClass(model))				
-				generator = makeGeneratorParams(generator, starti, endi, _args.is_rev)
-				datasource = model:filter(unpack(generator))
-				totalnum = model:count(unpack(generator))
-				
-			elseif method == 'getForeign' then
-				local v = generator[1]
-				assert(isInstance(v))
-				generator = makeGeneratorParams(generator, starti, endi, _args.is_rev)
-				-- no appending filter part
-				if type(generator[2]) == 'number' then
-					datasource = v:getForeign(unpack(generator))				
-					totalnum = v:numForeign(unpack(generator))
-				elseif generator[2] == 'filter' then
-					-- now generator[1] is 'field', generator[2] is 'filter'
-					local query_set = v:getForeign(generator[1])
-					table.remove(generator, 2)
-					table.remove(generator, 1)					
-					-- need to let filter to return the total number of fit elements
-					datasource, totalnum = query_set:filter(unpack(generator))
-				end
-				
-			elseif method == 'slice' then
-				local model = bamboo.getModelByName(generator[1])			
-				assert(isClass(model))
-				generator = makeGeneratorParams(generator, starti, endi, _args.is_rev)
-				datasource = model:slice(unpack(generator))
-				totalnum = model:numbers()
-				
-			elseif method == 'getCustomQuerySet' then
-				local model = bamboo.getModelByName(generator[1])			
-				assert(isClass(model))
-				generator = makeGeneratorParams(generator, starti, endi, _args.is_rev)
-				datasource = model:getCustomQuerySet(unpack(generator))
-				totalnum = model:numCustom(unpack(generator))
-			
-			end
-
-			_args.datasource = datasource
-			_args.totalnum = totalnum
-		end
+	-- assert(_args.content_tmpl)
+	-- if supply datasource
+	if #_args.datasource then
+		datasource = List(_args.datasource) or List()
 		
-		if totalnum then
-			totalpages = math.ceil(totalnum/npp)
-			if thepage > totalpages	then thepage = totalpages end
-		end
-		_args.thepage = thepage
-		_args.totalpages = totalpages
+	else
+		-- if supply model name, query_args, is_rev
+		local generator = table.copy(_args.generator)
+		assert(type(generator) == 'table')
+		local method = generator[2]
+		assert(type(method) == 'string')
+		if method == 'filter' then
+			local model = bamboo.getModelByName(generator[1])			
+			assert(isClass(model))				
+			generator = makeGeneratorParams(generator, starti, endi, _args.is_rev)
+			datasource = model:filter(unpack(generator))
+			totalnum = model:count(unpack(generator))
 			
-            	if _args.inline_tmpl then 
-			htmlcontent = View(_args.inline_tmpl, 'inline')(_args)
-		else
-			htmlcontent = View(_args.content_tmpl)(_args)
-		end
+		elseif method == 'getForeign' then
+			local v = generator[1]
+			assert(isInstance(v))
+			generator = makeGeneratorParams(generator, starti, endi, _args.is_rev)
+			-- no appending filter part
+			if type(generator[2]) == 'number' then
+				datasource = v:getForeign(unpack(generator))				
+				totalnum = v:numForeign(unpack(generator))
+			elseif generator[2] == 'filter' then
+				-- now generator[1] is 'field', generator[2] is 'filter'
+				local query_set = v:getForeign(generator[1])
+				table.remove(generator, 2)
+				table.remove(generator, 1)					
+				-- need to let filter to return the total number of fit elements
+				datasource, totalnum = query_set:filter(unpack(generator))
+			end
 			
-		if thepage == 1 then
-			if _args.head_inline then 
-				headcontent = View(_args.head_inline, 'inline')(_args)
-			end
-				
-			if _args.tail_inline then 
-				tailcontent = View(_args.tail_inline, 'inline')(_args)
-			end
+		elseif method == 'slice' then
+			local model = bamboo.getModelByName(generator[1])			
+			assert(isClass(model))
+			generator = makeGeneratorParams(generator, starti, endi, _args.is_rev)
+			datasource = model:slice(unpack(generator))
+			totalnum = model:numbers()
+			
+		elseif method == 'getCustomQuerySet' then
+			local model = bamboo.getModelByName(generator[1])			
+			assert(isClass(model))
+			generator = makeGeneratorParams(generator, starti, endi, _args.is_rev)
+			datasource = model:getCustomQuerySet(unpack(generator))
+			totalnum = model:numCustom(unpack(generator))
+		
 		end
 
+		_args.datasource = datasource
+		_args.totalnum = totalnum
+	end
+	
+	if totalnum then
+		totalpages = math.ceil(totalnum/npp)
+		if thepage > totalpages	then thepage = totalpages end
+	end
+	_args.thepage = thepage
+	_args.totalpages = totalpages
+		
+			if _args.inline_tmpl then 
+		htmlcontent = View(_args.inline_tmpl, 'inline')(_args)
 	else
-		-- if supply callback
-		if type(callback) == 'string' then
-			local callback_func = bamboo.getPluginCallbackByName(callback)
-			assert(type(callback_func) == 'function')
-			-- the callback should return 2 values: html fragment and totalnum
-			htmlcontent, totalnum = callback_func(starti, endi)
-		elseif type(callback) == 'function' then
-			htmlcontent, totalnum = callback(starti, endi)
+		htmlcontent = View(_args.content_tmpl)(_args)
+	end
+		
+	if thepage == 1 then
+		if _args.head_inline then 
+			headcontent = View(_args.head_inline, 'inline')(_args)
+		end
+			
+		if _args.tail_inline then 
+			tailcontent = View(_args.tail_inline, 'inline')(_args)
 		end
 	end
+
 	local prevpage = thepage - 1
 	if prevpage < 1 then prevpage = 1 end
 	local nextpage = thepage + 1
@@ -165,16 +150,16 @@ end
 
 function page(web, req)
 	local params = req.PARAMS
-	assert(params._tag, '[Error] @plugin pagination function page - missing _tag.')
-	local _args = plugin.unpersist(plugin_name, params._tag)
+	assert(params.tag, '[Error] @plugin pagination function page - missing _tag.')
+	local _args = plugin.unpersist(plugin_name, params.tag)
 	
 	return web:page(View(TMPLS[_args.tmpl])(helper(_args)))
 end
 
 function json(web, req)
 	local params = req.PARAMS
-	assert(params._tag, '[Error] @plugin pagination function json - missing _tag.')
-	local _args = plugin.unpersist(plugin_name, params._tag)
+	assert(params.tag, '[Error] @plugin pagination function json - missing _tag.')
+	local _args = plugin.unpersist(plugin_name, params.tag)
 
 	return web:jsonSuccess(helper(_args))
 end
@@ -182,55 +167,90 @@ end
 
 --[==[
 
-{^ pagination 
-datasource=all_persons,
-inline_tmpl = inline_variable,
-content_tmpl="item.html", 
-npp=20,
-paginurl = 'xxxxx',
-pagin_datatype = 'json',
-thepage = n,
+{^ pagination
 
-head_tmpl = 'head.html',
-head_inline = xxx,
-tail_tmpl = 'tail.html',
-tail_inline = xxx,
+	tag = <唯一标识符>;
+	datasource = <数据源，一个对象数组>;
+	tmpl = <选择分页形式（模板）>;
+	type = <选择是传统页面整体刷新形式，还是ajax形式 page|ajax>;
+	
+	totalCount = <要分页的目标总数>;
+	numPerPage = <每页的条目数>;
+	currentPage = <当前页数>;
+	
+	contentPart = <内容区页面模板文件>;
+	inlineContentPart = <内容区页面字符串>;
+	
+	headPart = <头部区页面模板文件>;
+	inlineHeadPart = <头部区页面字符串>;
+	
+	tailPart = <尾部区页面模板文件>;
+	inlineTailPart = <尾部区页面字符串>;
+	
+	pagUrl = <指定点击分页器上的按钮时，向哪个URL发送请求>;
+	pagRetType = <指定返回的结果类型，是返回页面，还是返回json. html|json>;
 
-generator = {'Model', 'filter', query_args, ...}
-generator = {v, 'getForeign', field, start, stop, is_rev}
-generator = {v, 'getForeign', field, 'filter', query_args, ..., start, stop, is_rev}
-generator = {'Model', 'slice', start, stop, is_rev}
-generator = {'Model', 'getCustomQuerySet', key, start, stop, is_rev}
-
-jscallback = [[
-	js code here
-]]
-
+	-- 如果datasource参数的数组部分为空，则下面的起作用
+	datasource = {
+		model = <模型名称>,
+		instance = <对象>,
+		action = <操作名称 filter|slice|getQuerySet|getForeign>,
+		
+		query_args = <action为filter时，需要提供的查询表达式参数>,
+		key ＝ <action为getQuerySet时，需要提供的key>,
+		start = <action为slice时，需要提供的起始点>,
+		stop = <action为slice时，需要提供的结束点>,
+		is_rev = <action为slice时，是否对结果反向>,
+		
+		field ＝ <action为getForeign时，外键field>,
+		fields = <action为slice或getQuerySet时，需要限制的返回的字段集>,
+	};
+	
+	jscallback = [[
+		js code here
+	]]
 ^}
 
+一些说明：
+1. type不写或为page时，是页面整体刷新，整体刷新时，pagUrl, pagRetType都没有作用；
+2. 在整体刷新时，args参数不需要存。；
+3. datasource为数组时，总是与整体刷新一起出现的。因此，对于ajax请求来说，datasource这个值一定不为数组
+
+
 --]==]
+
+
+
+
 function main(args, env)
-	assert(args._tag, '[Error] @plugin pagination - missing _tag.')
-	--assert(args.paginurl, '[Error] @plugin pagination - missing paginurl.')
+	assert(args.tag, '[Error] @plugin pagination - missing tag.')
+	assert(args.datasource, '[Error] @plugin pagination - missing datasource.')
 
 	-- default choose pagin_a style
 	args.tmpl = args.tmpl or 'pagin_select_ajax'
-	if not args.paginurl then
-		local purl = '/pagination/'..args._tag..'/page/'
-		local jurl = '/pagination/'..args._tag..'/json/'
-		local urls = {
-			[purl] = page,
-			[jurl] = json,
-		}
-		table.update(bamboo.URLS, urls)
-		args.paginurl = args.pagin_datatype == 'json' and jurl or purl
-	end
 	
-	if args.datasource then
-		args.orig_datasource = args.datasource
+	if args.type == 'ajax'
+		if not args.pagUrl then
+			-- 页面整体刷新的情况，用不到下面这两个URL
+			-- 下面这两个都是ajax下的。一个返回页面片断，一个返回json数据
+			local purl = '/pagination/html/'..args.tag
+			local jurl = '/pagination/json/'..args.tag
+			local urls = {
+				[purl] = page,
+				[jurl] = json,
+			}
+			table.update(bamboo.URLS, urls)
+			args.pagUrl = args.pagRetType == 'json' and jurl or purl
+		end
+		
+		-- 对于每次点击分页按钮，页面整体刷新的情况，相当于每次都会执行一次pagination插件
+		-- 因此不需要存储args这个中间信息，每次渲染页面，都会把新的分页的状态信息和新的数据源传到插件里面来
+		
+		-- 当使用ajax方式时，因为插件代码(main函数)只在渲染整体页面的时候执行一次，需要把这些参数信息存储在
+		-- redis中，下次翻页时，再取出来。这里面要注意的是，datasource这个值不要存储。其它都可以存。减少存储量
+		-- 并且存了也没用。不过，在使用ajax时，datasource这个值不会是数组。
+		plugin.persist(plugin_name, args.tag, args)
 	end
-
-	plugin.persist(plugin_name, args)
 
 	return View(TMPLS[args.tmpl]) (helper(args))
 end
